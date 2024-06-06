@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bodybuddy.fit.model.dao.WishDao">
+	
+	<!-- 찜 추가 -->
+	<insert id="insertWish" parameterType="Wish">
+		INSERT INTO wishes(routine_id, user_id)
+		VALUES(#{routineId}, #{userId})
+	</insert>
+	
+	<!-- 찜 해제 -->
+	<delete id="deleteWish" parameterType="Wish">
+		DELETE FROM wishes
+		WHERE routine_id = #{routineId} AND user_id = #{userId}
+	</delete>
+	
+	<!-- 찜 확인 -->
+	<select id="wishCheck" resultType="int" parameterType="Wish">
+		SELECT count(*) FROM wishes
+		WHERE routine_id = #{routineId} AND user_id = #{userId}
+	</select>
+	
+	<!-- 특정 회원이 찜한 찜 목록 가져오기 -->
+	<select id="selectAllWish" resultType="Wish" parameterType="string">
+		SELECT * FROM wishes
+		WHERE user_id = #{userId}
+	</select>
+	
+</mapper>

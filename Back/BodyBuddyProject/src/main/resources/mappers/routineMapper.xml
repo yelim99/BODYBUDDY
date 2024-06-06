@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bodybuddy.fit.model.dao.RoutineDao">
+	
+	<!-- 루틴 전체 목록 가져오기 -->
+	<select id="selectAll" resultType="Routine" parameterType="string">
+		SELECT routine_id, r.user_id, u.nickname, routine_title, date, description
+		FROM routines r, users u
+		WHERE r.user_id = u.user_id AND
+		<if test="keyword != null">
+			routine_title LIKE CONCAT('%', #{keyword}, '%')
+		</if>
+		ORDER BY date DESC
+	</select> 
+	
+	<!-- 루틴 상세보기 -->
+	<select id="selectOne" parameterType="int" resultType="Routine">
+		SELECT routine_id, r.user_id, u.nickname, routine_title, date, description
+		FROM routines r, users u
+		WHERE r.user_id = u.user_id AND routine_id = #{routineId}
+	</select>
+	
+	<!-- 해당 루틴의 운동 정보 리스트 가져오기 -->
+	<select id="selectAllExercise" parameterType="int" resultType="Exercise">
+		SELECT *
+		FROM exercises 
+		WHERE routine_id = #{routineId}
+	</select>
+	
+	<!-- 해당 루틴의 운동 상세정보 보기 (운동 한 개) -->
+	<select id="selectExercise" parameterType="map" resultType="Exercise">
+		SELECT *
+		FROM exercises
+		WHERE routine_id = #{routineId} AND exercise_id = #{exerciseId}
+	</select>
+	
+	<!-- 1. 루틴 등록 -->
+	<insert id="insertRoutine" parameterType="Routine" useGeneratedKeys="true" keyProperty="routineId">
+    	INSERT INTO routines (user_id)
+    	VALUES (#{userId})
+	</insert>
+	
+	<!-- 2. 루틴 등록 - 운동 등록 -->
+	<insert id="insertExercise" parameterType="Exercise" >
+		INSERT INTO exercises
+			(routine_id, exercise_name, exercise_part, set_cnt, weight, repetitions, day_of_the_week, time)
+		VALUES 
+			(#{routineId}, #{exerciseName}, #{exercisePart}, #{setCnt}, #{weight}, #{repetitions}, #{dayOfTheWeek}, #{time})
+	</insert>
+	
+	<!-- 3. 루틴 수정 - 제목, 내용 추가 (루틴 처음 만들 떄 사용) --> 
+	<update id="updateText" parameterType="Map" >
+		UPDATE routines
+		SET routine_title = #{routineTitle}, 
+			description = #{description}
+		WHERE routine_id = #{routineId};
+	</update>
+	
+	<!-- 루틴에 운동 전부 삭제 (루틴 수정용) -->
+	<delete id="deleteExercises" parameterType="int" >
+		DELETE FROM exercises
+		WHERE routine_id = #{routineId};
+	</delete>
+	
+	<!-- 루틴 삭제 -->
+	<delete id="deleteRoutine" parameterType="int" >
+		DELETE FROM routines
+		WHERE routine_id = #{routineId};
+	</delete>
+	
+	<!-- 내 루틴에 추가 (루틴 추가) -->
+	<insert id="insertMyRoutine" parameterType="Routine" useGeneratedKeys="true" keyProperty="routineId">
+		INSERT INTO routines (user_id, routine_title, description)
+		VALUES (#{userId}, #{routineTitle}, #{description})
+	</insert>
+	
+	<!-- 내 루틴에 추가 (운동 추가) -->
+	<insert id="insertMyExercise" parameterType="map">
+		INSERT INTO exercises (routine_id, exercise_name, exercise_part, set_cnt, weight, repetitions, day_of_the_week, time)
+		(SELECT #{exercise.routineId}, a, b, g, c, d, e, f 
+		FROM (
+			SELECT exercise_name a, exercise_part b, set_cnt g, weight c, repetitions d, day_of_the_week e, time f 
+			FROM exercises WHERE routine_id=#{originRId}
+		)z);
+	</insert>
+	
+</mapper>
